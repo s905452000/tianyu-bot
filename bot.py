@@ -1,7 +1,7 @@
 import os
 import logging
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
+from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, CallbackContext
 
 TOKEN = os.environ.get("TOKEN")
 logging.basicConfig(level=logging.INFO)
@@ -20,16 +20,16 @@ def main_menu():
 def back_menu():
     return InlineKeyboardMarkup([[InlineKeyboardButton("🔙 返回", callback_data="back")]])
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
+def start(update: Update, context: CallbackContext):
+    update.message.reply_text(
         "🌏 *天宇集團 TIANYU GROUP*\n\n歡迎！請選擇服務：",
         parse_mode="Markdown",
         reply_markup=main_menu()
     )
 
-async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def button(update: Update, context: CallbackContext):
     query = update.callback_query
-    await query.answer()
+    query.answer()
     data = query.data
     info = {
         "office": "🏢 *辦公室出租*\n\n越南、菲律賓、杜拜、斯里蘭卡、馬來西亞。\n\n聯繫：@TY_6789",
@@ -40,12 +40,17 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "contact": "📞 *聯繫客服*\n\n👤 @TY_6789\n\n24小時服務",
     }
     if data == "back":
-        await query.edit_message_text("🌏 *天宇集團*\n\n請選擇服務：", parse_mode="Markdown", reply_markup=main_menu())
+        query.edit_message_text("🌏 *天宇集團*\n\n請選擇服務：", parse_mode="Markdown", reply_markup=main_menu())
     elif data in info:
-        await query.edit_message_text(info[data], parse_mode="Markdown", reply_markup=back_menu())
+        query.edit_message_text(info[data], parse_mode="Markdown", reply_markup=back_menu())
+
+def main():
+    updater = Updater(TOKEN)
+    dp = updater.dispatcher
+    dp.add_handler(CommandHandler("start", start))
+    dp.add_handler(CallbackQueryHandler(button))
+    updater.start_polling()
+    updater.idle()
 
 if __name__ == "__main__":
-    app = Application.builder().token(TOKEN).build()
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CallbackQueryHandler(button))
-    app.run_polling()
+    main()
